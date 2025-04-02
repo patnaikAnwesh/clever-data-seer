@@ -36,41 +36,66 @@ def get_stock_data(symbol, period='90d', interval='1d'):
         # Convert date to string format
         df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
         
+        # Add symbol column
+        df['Symbol'] = symbol
+        
         return df
     except Exception as e:
         print(f"Error fetching data for {symbol}: {e}")
         # Return empty DataFrame with expected columns
-        return pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Change', 'ChangePercent'])
+        return pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Change', 'ChangePercent', 'Symbol'])
 
-def prepare_data_for_training(df, target_col='Close', sequence_length=10):
+def get_multiple_stocks_data(symbols, period='90d', interval='1d'):
     """
-    Prepare data for ML model training
+    Fetch data for multiple stock symbols efficiently
     
     Args:
-        df (pd.DataFrame): DataFrame with stock data
-        target_col (str): Column to predict
-        sequence_length (int): Number of previous days to use for prediction
+        symbols (list): List of stock symbols
+        period (str): Period of data to fetch
+        interval (str): Interval between data points
     
     Returns:
-        tuple: (X_train, y_train, X_test, y_test)
+        dict: Dictionary with symbol as key and DataFrame as value
     """
-    # Create sequences
-    data = df[target_col].values
-    X, y = [], []
+    result = {}
     
-    for i in range(len(data) - sequence_length):
-        X.append(data[i:i+sequence_length])
-        y.append(data[i+sequence_length])
+    # For efficiency, we can use yf.download for multiple symbols at once
+    if len(symbols) > 1:
+        try:
+            data = yf.download(symbols, period=period, interval=interval, group_by='ticker')
+            
+            for symbol in symbols:
+                if symbol in data.columns.levels[0]:
+                    # Extract data for this symbol
+                    df = data[symbol].reset_index()
+                    
+                    # Calculate additional metrics
+                    df['Change'] = df['Close'] - df['Open']
+                    df['ChangePercent'] = (df['Change'] / df['Open']) * 100
+                    
+                    # Convert date to string format
+                    df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
+                    
+                    # Add symbol column
+                    df['Symbol'] = symbol
+                    
+                    result[symbol] = df
+                else:
+                    print(f"No data found for {symbol}")
+                    result[symbol] = pd.DataFrame(columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Change', 'ChangePercent', 'Symbol'])
+        except Exception as e:
+            print(f"Error fetching data for multiple symbols: {e}")
+            # Fall back to individual fetching
+            for symbol in symbols:
+                result[symbol] = get_stock_data(symbol, period, interval)
+    else:
+        # For a single symbol, use the existing function
+        for symbol in symbols:
+            result[symbol] = get_stock_data(symbol, period, interval)
     
-    X = np.array(X)
-    y = np.array(y)
-    
-    # Use 80% for training
-    train_size = int(len(X) * 0.8)
-    X_train, X_test = X[:train_size], X[train_size:]
-    y_train, y_test = y[:train_size], y[train_size:]
-    
-    return X_train, y_train, X_test, y_test
+    return result
+
+# ... keep existing code (prepare_data_for_training function)
 
 def format_response_data(df):
     """

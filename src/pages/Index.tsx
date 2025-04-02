@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import StockSelector from "@/components/StockSelector";
 import StockCard from "@/components/StockCard";
 import StockChart from "@/components/StockChart";
+import StockPricesList from "@/components/StockPricesList";
 import { fetchStockData, fetchHistoricalData, StockData } from "@/services/stockService";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -72,8 +73,15 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Quick Stock View */}
+      {/* All Stocks Prices Section */}
       <section className="py-12 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <StockPricesList />
+        </div>
+      </section>
+
+      {/* Quick Stock View */}
+      <section className="py-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between mb-8">
             <h2 className="text-2xl font-bold mb-4 md:mb-0">Quick Stock Analysis</h2>
