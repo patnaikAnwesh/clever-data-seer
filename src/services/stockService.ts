@@ -1,6 +1,6 @@
 
 // This file will contain the API services to fetch stock data
-// In a real app, this would connect to a real API
+// It connects to our Python ML API
 
 // Define types
 export interface StockData {
@@ -33,8 +33,131 @@ export interface SentimentData {
 // Sample stock symbols
 export const availableSymbols = ['AAPL', 'GOOGL', 'AMZN', 'MSFT', 'TSLA', 'FB', 'NVDA', 'JPM', 'V', 'JNJ'];
 
-// Mock data generator (in a real app, this would be an API call)
+// API base URL - update this to your Python API endpoint
+const API_BASE_URL = 'http://localhost:5000/api';
+
+// Flag to use mock data if API is not available
+let useMockData = false;
+
+// Helper function to check API availability
+const checkApiAvailability = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/stock/AAPL`, { signal: AbortSignal.timeout(3000) });
+    return response.ok;
+  } catch (error) {
+    console.warn('ML API not available, using mock data');
+    useMockData = true;
+    return false;
+  }
+};
+
+// Initialize API check
+checkApiAvailability();
+
+// Fetch stock data from API
 export const fetchStockData = async (symbol: string): Promise<StockData> => {
+  if (useMockData) {
+    return fetchMockStockData(symbol);
+  }
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/stock/${symbol}`);
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching stock data:', error);
+    return fetchMockStockData(symbol);
+  }
+};
+
+// Fetch historical data from API
+export const fetchHistoricalData = async (symbol: string, days: number = 30): Promise<StockData[]> => {
+  if (useMockData) {
+    return fetchMockHistoricalData(symbol, days);
+  }
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/historical/${symbol}?days=${days}`);
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching historical data:', error);
+    return fetchMockHistoricalData(symbol, days);
+  }
+};
+
+// Fetch predictions from API
+export const fetchPredictions = async (symbol: string): Promise<{ [key: string]: PredictionData }> => {
+  if (useMockData) {
+    return fetchMockPredictions(symbol);
+  }
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/predictions/${symbol}`);
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching predictions:', error);
+    return fetchMockPredictions(symbol);
+  }
+};
+
+// Fetch sentiment data from API
+export const fetchSentimentData = async (symbol: string): Promise<SentimentData> => {
+  if (useMockData) {
+    return fetchMockSentimentData(symbol);
+  }
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/sentiment/${symbol}`);
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching sentiment data:', error);
+    return fetchMockSentimentData(symbol);
+  }
+};
+
+// Fetch future predictions from API
+export const fetchFuturePredictions = async (symbol: string, days: number = 7): Promise<{ [key: string]: number }> => {
+  if (useMockData) {
+    return fetchMockFuturePredictions(symbol, days);
+  }
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/future/${symbol}?days=${days}`);
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching future predictions:', error);
+    return fetchMockFuturePredictions(symbol, days);
+  }
+};
+
+// Mock data functions (fallback when API is unavailable)
+// These are the same as in the original file
+
+const fetchMockStockData = async (symbol: string): Promise<StockData> => {
   // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 500));
   
@@ -74,8 +197,7 @@ export const fetchStockData = async (symbol: string): Promise<StockData> => {
   };
 };
 
-// Historical data (for charts)
-export const fetchHistoricalData = async (symbol: string, days: number = 30): Promise<StockData[]> => {
+const fetchMockHistoricalData = async (symbol: string, days: number = 30): Promise<StockData[]> => {
   // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 800));
   
@@ -123,8 +245,7 @@ export const fetchHistoricalData = async (symbol: string, days: number = 30): Pr
   return data;
 };
 
-// Prediction data
-export const fetchPredictions = async (symbol: string): Promise<{ [key: string]: PredictionData }> => {
+const fetchMockPredictions = async (symbol: string): Promise<{ [key: string]: PredictionData }> => {
   // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 700));
   
@@ -163,7 +284,7 @@ export const fetchPredictions = async (symbol: string): Promise<{ [key: string]:
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   
-  const currentPrice = (await fetchStockData(symbol)).close;
+  const currentPrice = (await fetchMockStockData(symbol)).close;
   const arimaChange = (Math.random() * 0.04 - 0.02); // -2% to 2%
   const lstmChange = (Math.random() * 0.05 - 0.025); // -2.5% to 2.5%
   const linearChange = (Math.random() * 0.06 - 0.03); // -3% to 3%
@@ -193,8 +314,7 @@ export const fetchPredictions = async (symbol: string): Promise<{ [key: string]:
   };
 };
 
-// Sentiment data
-export const fetchSentimentData = async (symbol: string): Promise<SentimentData> => {
+const fetchMockSentimentData = async (symbol: string): Promise<SentimentData> => {
   // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 600));
   
@@ -230,13 +350,12 @@ export const fetchSentimentData = async (symbol: string): Promise<SentimentData>
   };
 };
 
-// Future predictions for next 7 days
-export const fetchFuturePredictions = async (symbol: string, days: number = 7): Promise<{ [key: string]: number }> => {
+const fetchMockFuturePredictions = async (symbol: string, days: number = 7): Promise<{ [key: string]: number }> => {
   // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 900));
   
   const predictions: { [key: string]: number } = {};
-  const currentPrice = (await fetchStockData(symbol)).close;
+  const currentPrice = (await fetchMockStockData(symbol)).close;
   let basePrice = currentPrice;
   
   // For AAPL, use data inspired by image
