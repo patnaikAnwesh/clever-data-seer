@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,14 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Custom colors for our stock app
+				"stock-blue": "#0f172a",
+				"stock-orange": "#ff8c00",
+				"stock-green": "#10b981",
+				"stock-red": "#ef4444",
+				"stock-yellow": "#f59e0b",
+				"stock-cyan": "#06b6d4",
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
